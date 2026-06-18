@@ -1,0 +1,28 @@
+name: deep_learning_fake_news
+
+# Cross-platform conda environment for the project.
+# Python + Jupyter come from conda; the scientific stack and TensorFlow are installed
+# via pip in one block so their versions resolve together (TF >= 2.17 supports NumPy 2).
+#
+# Create / update / activate:
+#   conda env create -f environment.yml
+#   conda activate deep_learning_fake_news
+#
+# Apple Silicon (M1/M2/M3): the pip 'tensorflow' wheel runs on CPU out of the box.
+#   For GPU acceleration you can additionally `pip install tensorflow-metal`.
+
+channels:
+  - conda-forge
+
+dependencies:
+  - python=3.11
+  - pip>=23
+  - jupyterlab
+  - ipykernel
+  - pip:
+      - "tensorflow>=2.17,<2.22"
+      - numpy
+      - pandas
+      - scikit-learn
+      - matplotlib
+      - streamlit
