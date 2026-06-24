@@ -43,6 +43,8 @@ deep_learning_fake_news/
 │   ├── README.md                 <- dataset format + how the loader auto-detects columns
 │   ├── raw/                      <- put the original dataset here (git-ignored)
 │   └── processed/                <- optional intermediate files (git-ignored)
+├── scripts/
+│   └── download_data.py          <- fetches + prepares the Kaggle dataset into data/raw/
 ├── notebooks/
 │   └── fake_news_detection.ipynb <- THE model: EDA → preprocessing → 3 models → eval → export
 ├── models/                       <- exported model lands here (git-ignored, regenerated)
@@ -63,7 +65,22 @@ conda env create -f environment.yml
 conda activate deep_learning_fake_news
 ```
 
-### b. Run the notebook
+### b. Get the dataset
+
+Download and prepare the Kaggle [`saratchendra/fake-news`](https://www.kaggle.com/datasets/saratchendra/fake-news)
+dataset in one command (needs a Kaggle API token — see the script's header for the one-time setup):
+
+```bash
+python scripts/download_data.py
+```
+
+This writes `data/raw/fake_news.csv` (a combined `title + author + text` field, label `1 = fake` /
+`0 = real`) — exactly where the notebook's `DATA_PATH` points. No credentials? Download `train.csv`
+from the dataset page and run `python scripts/download_data.py --from-csv path/to/train.csv`.
+
+If you skip this step, the notebook still runs on a built-in synthetic dataset.
+
+### c. Run the notebook
 
 ```bash
 jupyter lab     # or: jupyter notebook
@@ -73,7 +90,7 @@ Open `notebooks/fake_news_detection.ipynb` and run all cells. With no dataset pr
 built-in synthetic dataset so everything works immediately. The final section exports
 `models/fake_news_model.keras`.
 
-### c. Launch the frontend (MVP)
+### d. Launch the frontend (MVP)
 
 From the **project root** (after the notebook has exported the model):
 
@@ -88,11 +105,15 @@ returns a verdict, a confidence score, and the raw fake-probability.
 
 ## 4. Using the real dataset
 
-1. Drop your CSV into `data/raw/` (e.g. `data/raw/fake_news.csv`).
-2. In the notebook's **Section 2 (configuration)**, set `DATA_PATH` to point at it.
-3. If the auto-detection guesses the wrong columns, also set `TEXT_COLUMN`, `LABEL_COLUMN`, and/or
-   `FAKE_LABEL_VALUE`.
-4. Re-run the notebook top to bottom.
+The easy path is `python scripts/download_data.py` (see Quickstart §b) — it produces
+`data/raw/fake_news.csv` with a `text` column and `label` (`1 = fake`, `0 = real`), and the
+notebook is already configured to read it (`DATA_PATH`, `TEXT_COLUMN = "text"`).
+
+To use a **different** CSV instead:
+
+1. Drop your CSV into `data/raw/` and point `DATA_PATH` at it (notebook **Section 2**).
+2. If your columns differ, set `TEXT_COLUMN`, `LABEL_COLUMN`, and/or `FAKE_LABEL_VALUE` there.
+3. Re-run the notebook top to bottom.
 
 The loader normalises labels to `1 = fake`, `0 = real` and handles common encodings
 (`0/1`, `fake/real`, `true/false`, …). See `data/README.md` for the full format spec.

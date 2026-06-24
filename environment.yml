@@ -26,3 +26,4 @@ dependencies:
       - scikit-learn
       - matplotlib
       - streamlit
+      - kagglehub      # used by scripts/download_data.py to fetch the dataset

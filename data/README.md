@@ -39,14 +39,27 @@ normalises many common encodings automatically:
 If your labels use some other encoding, set `FAKE_LABEL_VALUE` in Section 2 to the value that
 means "fake" (e.g. `FAKE_LABEL_VALUE = "FAKE"`).
 
+## Getting the project's dataset
+
+Run the helper from the project root:
+
+```bash
+python ../scripts/download_data.py     # or, from root: python scripts/download_data.py
+```
+
+It downloads Kaggle's [`saratchendra/fake-news`](https://www.kaggle.com/datasets/saratchendra/fake-news)
+(`train.csv` with `id, title, author, text, label`; `label` is `1 = fake`, `0 = real`), builds a
+combined `title + author + text` field, and writes a clean `raw/fake_news.csv` here. See the script's
+header for Kaggle-credential setup (or use `--from-csv` if you downloaded `train.csv` manually).
+
 ## No dataset yet?
 
 That's fine — if `DATA_PATH` does not point to an existing file, the notebook automatically
 builds a small **synthetic, balanced** fake-vs-real dataset so every cell still runs end to end.
 Swapping in the real data is a one-line change to `DATA_PATH`.
 
-## Suggested public datasets
+## Other public datasets
 
-If you still need data, common choices for this task include the Kaggle "Fake and Real News"
+Other common choices for this task include the Kaggle "Fake and Real News"
 dataset (separate `Fake.csv` / `True.csv` files — concatenate them and add a label column),
 the WELFake dataset, or the LIAR dataset.
