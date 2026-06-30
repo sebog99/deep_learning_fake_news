@@ -84,7 +84,7 @@ built-in synthetic dataset so everything works immediately. The final section ex
 From the **project root** (after the notebook has exported the model):
 
 ```bash
-streamlit run app/app.py
+python -X utf8 -m streamlit run app\app.py
 ```
 
 Paste a full article, optionally adjust the decision threshold in the sidebar, and the app

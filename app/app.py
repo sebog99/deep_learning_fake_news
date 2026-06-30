@@ -5,7 +5,7 @@ Loads the end-to-end model exported by the notebook (`models/fake_news_model.ker
 which contains the text-vectorization step inside it, so the app passes raw text in
 and reads a fake-probability out.
 
-    streamlit run app/app.py
+    python -X utf8 -m streamlit run app\app.py
 """
 import os
 import re
