@@ -7,7 +7,7 @@ what to put here and how the notebook reads it.
 
 ```
 data/
-├── raw/         <- put your original, untouched dataset here (e.g. fake_news.csv)
+├── raw/         <- put your original, untouched dataset here (e.g. fake_train.csv)
 └── processed/   <- optional: any intermediate/cleaned files you generate
 ```
 
@@ -41,22 +41,17 @@ means "fake" (e.g. `FAKE_LABEL_VALUE = "FAKE"`).
 
 ## Getting the project's dataset
 
-Run the helper from the project root:
+Download Kaggle's [`saratchendra/fake-news`](https://www.kaggle.com/datasets/saratchendra/fake-news)
+`train.csv` (columns `id, title, author, text, label`; `label` is `1 = fake`, `0 = real`) and drop it
+into `raw/fake_train.csv` — exactly where the notebook's `DATA_PATH` points.
 
-```bash
-python ../scripts/download_data.py     # or, from root: python scripts/download_data.py
-```
+All cleaning (selecting the text/label columns, dropping empty rows and duplicates, normalising the
+label) is done **inside the notebook** (Section 3), so no separate preparation step is needed.
 
-It downloads Kaggle's [`saratchendra/fake-news`](https://www.kaggle.com/datasets/saratchendra/fake-news)
-(`train.csv` with `id, title, author, text, label`; `label` is `1 = fake`, `0 = real`), builds a
-combined `title + author + text` field, and writes a clean `raw/fake_news.csv` here. See the script's
-header for Kaggle-credential setup (or use `--from-csv` if you downloaded `train.csv` manually).
+## No dataset present
 
-## No dataset yet?
-
-That's fine — if `DATA_PATH` does not point to an existing file, the notebook automatically
-builds a small **synthetic, balanced** fake-vs-real dataset so every cell still runs end to end.
-Swapping in the real data is a one-line change to `DATA_PATH`.
+If `DATA_PATH` does not point to an existing file, the notebook builds a small **synthetic, balanced**
+fake-vs-real dataset so every cell still runs end to end.
 
 ## Other public datasets
 
