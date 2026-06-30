@@ -1,16 +1,11 @@
 """
-Fake News Detector — Streamlit MVP frontend
-===========================================
+Fake News Detector — Streamlit frontend.
 
-This is the user-facing interface for the project. It loads the single end-to-end
-model exported by the notebook (`models/fake_news_model.keras`), which already
-contains the text-vectorization step inside it, so this app only has to pass raw
-text in and read a probability out.
+Loads the end-to-end model exported by the notebook (`models/fake_news_model.keras`),
+which contains the text-vectorization step inside it, so the app passes raw text in
+and reads a fake-probability out.
 
-Run from the project root:
     streamlit run app/app.py
-
-The notebook must have been run at least once so the model file exists.
 """
 import os
 import re
@@ -27,14 +22,17 @@ DEFAULT_MODEL = os.path.normpath(os.path.join(HERE, "..", "models", "fake_news_m
 MODEL_PATH = os.environ.get("FAKE_NEWS_MODEL", DEFAULT_MODEL)
 
 
-# --- The SAME standardization function used in training -----------------------
-# It must be registered (and/or passed via custom_objects) so the saved model,
-# which references it inside its TextVectorization layer, can be deserialized.
+# --- Standardization function (must match the notebook's exactly) -------------
+# Registered and passed via custom_objects so the saved model, which references it
+# inside its TextVectorization layer, can be deserialized.
 @keras.utils.register_keras_serializable(package="fake_news")
 def standardization(input_data):
     lowercase = tf.strings.lower(input_data)
     no_tag = tf.strings.regex_replace(lowercase, "<[^>]+>", "")
-    return tf.strings.regex_replace(no_tag, "[%s]" % re.escape(string.punctuation), "")
+    no_punct = tf.strings.regex_replace(no_tag, "[%s]" % re.escape(string.punctuation), "")
+    # Must match the notebook exactly: drop non-ASCII, then collapse whitespace.
+    ascii_only = tf.strings.regex_replace(no_punct, r"[^\x00-\x7f]+", "")
+    return tf.strings.regex_replace(ascii_only, r"\s+", " ")
 
 
 @st.cache_resource(show_spinner="Loading model…")
@@ -52,7 +50,8 @@ def predict(model, text):
 st.set_page_config(page_title="Fake News Detector", page_icon="📰", layout="centered")
 st.title("📰 Fake News Detector")
 st.caption("An RNN/LSTM model that flags likely fake news for human review. "
-           "Paste a headline or article below.")
+           "Paste the **full article text** below — the model was trained on complete "
+           "articles, so a short headline or a sentence or two is unreliable.")
 
 # Guard: model must exist
 if not os.path.exists(MODEL_PATH):
@@ -84,12 +83,21 @@ with st.sidebar:
 # --- Example buttons ----------------------------------------------------------
 EXAMPLES = {
     "📄 Looks legitimate":
-        "According to officials, the central bank confirmed that quarterly inflation "
-        "figures were consistent with earlier estimates. Analysts said the data matched "
-        "seasonal expectations and that no immediate policy change was required.",
+        "WASHINGTON - The Federal Reserve left interest rates unchanged on Wednesday and "
+        "signaled it was in no hurry to adjust borrowing costs, citing steady economic growth "
+        "and a labor market that remains resilient. In a statement following its two-day "
+        "meeting, the central bank said inflation had eased over the past year but remained "
+        "somewhat above its 2 percent target. Officials noted that consumer spending had "
+        "continued to expand at a solid pace, while business investment showed signs of "
+        "moderating. The Fed chair said policymakers would continue to assess incoming data, "
+        "the evolving outlook, and the balance of risks before making any changes. Economists "
+        "said the decision was widely expected and that the central bank was likely to hold "
+        "rates steady through the next quarter as it waited for clearer evidence on the "
+        "direction of prices and employment. Markets showed little reaction, with major stock "
+        "indexes ending the session nearly flat and government bond yields holding steady.",
     "🚨 Looks like clickbait":
         "SHOCKING the government is HIDING the TRUTH about the economy and you WONT "
-        "believe what happens next. Share this before they DELETE it forever — the "
+        "believe what happens next. Share this before they DELETE it forever - the "
         "mainstream media is TERRIFIED of this story.",
 }
 
@@ -103,10 +111,10 @@ for col, (label, text) in zip(ex_cols, EXAMPLES.items()):
 
 # --- Main input ---------------------------------------------------------------
 article = st.text_area(
-    "Article or headline text",
+    "Article text",
     key="article_text",
     height=200,
-    placeholder="Paste the news text here…",
+    placeholder="Paste the full article text here…",
 )
 
 analyze = st.button("Analyze", type="primary", use_container_width=True)
