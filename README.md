@@ -3,15 +3,11 @@
 Fake-news detection with **RNNs and LSTMs** — a Deep Learning final-project MVP for IE University.
 
 The project takes the raw text of a news article (or headline) and predicts whether it is **fake**
-or **real**. It pairs an analytical backend (a single Jupyter notebook) with a user-facing frontend
-(a Streamlit app), demonstrating an end-to-end, real-time predictive system.
-
-> **This README is the source of truth.** If you are picking the project up to continue it, read this
-> file first — it describes the goal, the structure, the conventions, and exactly what is left to do.
+or **real**. It pairs an analytical backend (a Jupyter notebook) with a Streamlit frontend.
 
 ---
 
-## 1. The business case (the "why")
+## 1. Business case
 
 Moderation teams and platforms receive far more articles per day than humans can fact-check.
 Misinformation that slips through erodes trust; over-blocking real reporting damages credibility.
@@ -36,22 +32,20 @@ Because false negatives usually cost more, we report **recall (on fake)** and **
 
 ```
 deep_learning_fake_news/
-├── README.md                     <- you are here (source of truth)
+├── README.md                     <- project overview
 ├── environment.yml               <- conda environment
 ├── .gitignore
 ├── data/
 │   ├── README.md                 <- dataset format + how the loader auto-detects columns
 │   ├── raw/                      <- put the original dataset here (git-ignored)
 │   └── processed/                <- optional intermediate files (git-ignored)
-├── scripts/
-│   └── download_data.py          <- fetches + prepares the Kaggle dataset into data/raw/
 ├── notebooks/
-│   └── fake_news_detection.ipynb <- THE model: EDA → preprocessing → 3 models → eval → export
+│   └── fake_news_detection.ipynb <- model: EDA → preprocessing → 3 models → eval → export
 ├── models/                       <- exported model lands here (git-ignored, regenerated)
 ├── app/
-│   └── app.py                    <- Streamlit frontend (the MVP)
+│   └── app.py                    <- Streamlit frontend
 └── reports/
-    └── figures/                  <- plots saved by the notebook for the slide deck
+    └── figures/                  <- plots saved by the notebook
 ```
 
 ---
@@ -67,18 +61,13 @@ conda activate deep_learning_fake_news
 
 ### b. Get the dataset
 
-Download and prepare the Kaggle [`saratchendra/fake-news`](https://www.kaggle.com/datasets/saratchendra/fake-news)
-dataset in one command (needs a Kaggle API token — see the script's header for the one-time setup):
+Download Kaggle's [`saratchendra/fake-news`](https://www.kaggle.com/datasets/saratchendra/fake-news)
+`train.csv` (columns `id, title, author, text, label`; `label` is `1 = fake` / `0 = real`) and save it as
+`data/raw/fake_train.csv` — exactly where the notebook's `DATA_PATH` points.
 
-```bash
-python scripts/download_data.py
-```
-
-This writes `data/raw/fake_news.csv` (a combined `title + author + text` field, label `1 = fake` /
-`0 = real`) — exactly where the notebook's `DATA_PATH` points. No credentials? Download `train.csv`
-from the dataset page and run `python scripts/download_data.py --from-csv path/to/train.csv`.
-
-If you skip this step, the notebook still runs on a built-in synthetic dataset.
+All cleaning is done **inside the notebook** (Section 3): it selects the `text` and `label` columns, drops
+empty rows and duplicates, and normalises the label. If you skip this step entirely, the notebook still
+runs on a built-in synthetic dataset.
 
 ### c. Run the notebook
 
@@ -90,24 +79,23 @@ Open `notebooks/fake_news_detection.ipynb` and run all cells. With no dataset pr
 built-in synthetic dataset so everything works immediately. The final section exports
 `models/fake_news_model.keras`.
 
-### d. Launch the frontend (MVP)
+### d. Launch the frontend
 
 From the **project root** (after the notebook has exported the model):
 
 ```bash
-streamlit run app/app.py
+python -X utf8 -m streamlit run app\app.py
 ```
 
-Paste a headline or article, optionally adjust the decision threshold in the sidebar, and the app
+Paste a full article, optionally adjust the decision threshold in the sidebar, and the app
 returns a verdict, a confidence score, and the raw fake-probability.
 
 ---
 
 ## 4. Using the real dataset
 
-The easy path is `python scripts/download_data.py` (see Quickstart §b) — it produces
-`data/raw/fake_news.csv` with a `text` column and `label` (`1 = fake`, `0 = real`), and the
-notebook is already configured to read it (`DATA_PATH`, `TEXT_COLUMN = "text"`).
+The default path is `data/raw/fake_train.csv` (Kaggle's `train.csv`, see Quickstart §b) — the notebook is
+already configured to read it (`DATA_PATH`, `TEXT_COLUMN = "text"`) and cleans it in Section 3.
 
 To use a **different** CSV instead:
 
@@ -120,11 +108,11 @@ The loader normalises labels to `1 = fake`, `0 = real` and handles common encodi
 
 ---
 
-## 5. The model (the "how")
+## 5. The model
 
-Text preprocessing mirrors the class sentiment-analysis pipeline:
+Text preprocessing:
 
-- a custom **`standardization`** function: lowercase → strip HTML → strip punctuation;
+- a custom **`standardization`** function: lowercase → strip HTML → strip punctuation → drop non-ASCII;
 - a **`TextVectorization`** layer (`max_tokens=10000`, `output_sequence_length=250`), **adapted on the
   training split only** to avoid leakage;
 - a learned **`Embedding`** (dim 64) front-end.
@@ -146,57 +134,30 @@ feeds in raw text and reads out a probability — no preprocessing code is dupli
 
 ---
 
-## 6. How the project maps to the grading rubric
+## 6. Results
 
-| Rubric pillar (weight) | Where it is addressed |
-|---|---|
-| Business use case & value proposition (20%) | README §1 and notebook Section 1 (incl. false-positive/negative cost analysis) |
-| Technical depth & model architecture (25%) | notebook Sections 2–9: leakage-free preprocessing, 3 justified architectures, hyperparameters, early stopping |
-| MVP integration & frontend UX (25%) | `app/app.py` + the end-to-end model export (notebook Section 11) |
-| Presentation & team delivery (20%) | figures in `reports/figures/` + the architecture/results story below |
-| Live demo & time management (10%) | `streamlit run app/app.py` for the live demo |
-
----
-
-## 7. Results
-
-Fill this in after running on the real dataset (the notebook prints this exact table in Section 9):
+Test-set performance on the Kaggle `saratchendra/fake-news` dataset (positive class = fake):
 
 | Model | Accuracy | Precision | Recall | F1 | ROC-AUC |
 |---|---|---|---|---|---|
-| SimpleRNN | _tbd_ | _tbd_ | _tbd_ | _tbd_ | _tbd_ |
-| Stacked LSTM | _tbd_ | _tbd_ | _tbd_ | _tbd_ | _tbd_ |
-| Bidirectional LSTM | _tbd_ | _tbd_ | _tbd_ | _tbd_ | _tbd_ |
+| SimpleRNN | 0.793 | 0.827 | 0.730 | 0.775 | 0.816 |
+| Stacked LSTM | 0.802 | 0.908 | 0.663 | 0.767 | 0.873 |
+| Bidirectional LSTM | **0.953** | **0.958** | **0.945** | **0.951** | **0.989** |
 
-Confusion matrices, ROC curves, and training curves are saved to `reports/figures/`.
+The Bidirectional LSTM is the strongest model and the one exported for the app. Confusion matrices,
+ROC curves, and training curves are saved to `reports/figures/`.
 
 ---
 
-## 8. Conventions (read before continuing the project)
+## 7. Conventions
 
 - **Label convention:** `1 = fake`, `0 = real`, everywhere.
 - **No leakage:** the vectorizer is `adapt()`-ed on training text only; the test set is touched only at
   final evaluation.
-- **Single notebook:** all modelling lives in `notebooks/fake_news_detection.ipynb` (course requirement).
-  The only other code is the frontend `app/app.py`.
+- **Single notebook:** all modelling lives in `notebooks/fake_news_detection.ipynb`. The only other code
+  is the frontend `app/app.py`.
 - **Config in one place:** every knob (`DATA_PATH`, vocab size, sequence length, epochs, …) is in the
   notebook's Section 2.
 - **Reproducibility:** seeds are fixed (`SEED = 42`).
 - **Smoke-test switch:** setting the env var `FAKE_NEWS_SMOKE_TEST=1` shrinks the data and epochs for a
-  fast end-to-end check; leave it unset for real runs.
-
----
-
-## 9. Roadmap
-
-- [ ] Integrate the real labelled course dataset (replace the synthetic fallback via `DATA_PATH`).
-- [ ] Re-run the notebook and fill in the results table (§7) and figures.
-- [ ] Rehearse the 15-minute presentation + live Streamlit demo.
-- [ ] (Optional) tune sequence length / embedding dim / threshold for the precision–recall trade-off you want.
-
----
-
-## 10. Deliverables (per the guidelines)
-
-1. **GitHub repository** — this repo: documented backend (notebook) + frontend (`app.py`) + this README.
-2. **Presentation deck** (PDF) — built separately; use the figures in `reports/figures/`.
+  fast end-to-end check; leave it unset for a full run.
